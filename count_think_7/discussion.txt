@@ -1,0 +1,7 @@
+5. Discuss why not use the model in higher degree with R2=0.96553 to predict.
+
+A: 他出現了overfitting的現象，也就是說，高階多項式模型可能會在訓練數據上表現得很好，但它們往往捕捉到數據中的noise而非底層的趨勢。這意味著模型可能無法很好地推廣到新的數據集上，導致預測性能下降。
+
+6. Use the data in file “TestDataSet.txt” to back up your points. 
+
+A: 可以從 Test_Data.png 查看R2的值
