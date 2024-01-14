@@ -1,0 +1,1 @@
+我認為老師給的predicted rings(age) abosolute errors distributions的圖片有誤，老師所模擬的圖x軸應該是predicted ring sizes的結果,而非 predicted ring size absolute error的模擬結果
