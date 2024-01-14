@@ -47,6 +47,7 @@ ppv = []
 auroc = []
 optimal_ks = []
 max_accuracies = []
+accuracies_for_k = {k: [] for k in np.linspace(0, 1, 101)}
 
 for _ in range(1000):
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
@@ -66,12 +67,18 @@ for _ in range(1000):
     ppv.append(tp / (tp + fp))
     auroc.append(roc_auc_score(y_test, y_pred))
 
+    # 第二張圖
     # 尋找最優閾值k
     optimal_k, max_accuracy = find_optimal_threshold(clf, X_test, y_test)
     
     # 收集數據
     optimal_ks.append(optimal_k)
     max_accuracies.append(max_accuracy)
+    # 第三張圖
+    for k in np.linspace(0, 1, 101):
+        y_pred = (clf.predict_proba(X_test)[:,1] >= k).astype(int)
+        accuracy = accuracy_score(y_test, y_pred)
+        accuracies_for_k[k].append(accuracy)
 
 weights = np.array(weights)
 
@@ -80,6 +87,8 @@ lower_weights, upper_weights = np.percentile(weights, [2.5, 97.5], axis=0)
 
 mean_accuracy = np.mean(accuracies)
 lower_accuracy, upper_accuracy = np.percentile(accuracies, [2.5, 97.5])
+
+std_max_accuracy = np.std(max_accuracies)
 
 mean_sensitivity = np.mean(sensitivities)
 lower_sensitivity, upper_sensitivity = np.percentile(sensitivities, [2.5, 97.5])
@@ -109,10 +118,11 @@ print('Mean AUROC = {},  95% confidence interval = {}'.format(round(mean_auroc, 
 # (1)maxium accuracies
 # Calculate the mean and standard deviation of max_accuracies
 plt.figure()
-plt.hist(accuracies, bins=20, edgecolor='black')
+plt.hist(accuracies, bins=20, edgecolor='black', label='Mean Accuracies\nMean = {:.2f} SD = {:.2f}'.format(mean_accuracy, std_max_accuracy))
 plt.xlabel('Maximum Accuracies')
 plt.ylabel('Numbers of Maximum Accuracies')
 plt.title('Maximum Accuracies')
+plt.legend(loc='upper left')
 plt.savefig('Maximum Accuracies.png')
 
 # (2)threshold values k for maximum accuracies
@@ -133,24 +143,24 @@ plt.tight_layout()
 plt.savefig('Threshold values k for Maximum Accuracies.png')
 
 # (3)mean accuracies for different threshold values
-k_values = np.linspace(0.4, 0.6, 101)
-accuracies = []
+# 計算每個閾值的平均準確度
+mean_accuracies = {k: np.mean(v) for k, v in accuracies_for_k.items()}
 
-for k in k_values:
-    y_pred = (clf.predict_proba(X_test)[:,1] >= k).astype(bool)
-
-    accuracies.append(accuracy_score(y_test, y_pred))
-
-max_accuracy_index = np.argmax(accuracies)
-max_accuracy_k = k_values[max_accuracy_index]
-max_accuracy = accuracies[max_accuracy_index]
-
-plt.figure()
-plt.plot(k_values, accuracies, label='Mean Accuracies')  # add label
-plt.plot(max_accuracy_k, max_accuracy, 'ro', label='Max Mean Accuracies')  # add label
-plt.annotate(f'({max_accuracy_k:.2f}, {max_accuracy:.2f})', (max_accuracy_k, max_accuracy), textcoords="offset points", xytext=(-10,-10), ha='center')  # annotate the coordinate
-plt.xlabel('Threshold Values k')
-plt.ylabel('Accuracy')
-plt.title('Mean Accuracies for Different Threshold Values')
-plt.legend()  # show legend
-plt.savefig('Mean Accuracies for Different Threshold Values.png')
+# 繪製平均準確度
+plt.figure(figsize=(10, 6))
+plt.plot(list(mean_accuracies.keys()), list(mean_accuracies.values()), label='Mean Accuracies')
+max_accuracy_k = max(mean_accuracies, key=mean_accuracies.get)
+plt.scatter(max_accuracy_k, mean_accuracies[max_accuracy_k], label='Maximum Mean Accuracy', color='red')  # 最大準確度的點
+plt.text(max_accuracy_k, mean_accuracies[max_accuracy_k], '({}, {:.2f})'.format(max_accuracy_k, mean_accuracies[max_accuracy_k]), ha='right') 
+plt.title('Mean accuracies for different threshold values')
+plt.xlabel('Threshold values')
+plt.ylabel('Mean Accuracies')
+plt.xlim(0.4, 0.6)
+plt.ylim(0.7750, 0.7925)
+plt.legend(loc='upper left')
+plt.tight_layout()
+plt.savefig('Mean accuracies for different threshold values.png')
+# print("=======================")
+# print(optimal_ks)
+# print("=======================")
+# print(max_accuracies)
