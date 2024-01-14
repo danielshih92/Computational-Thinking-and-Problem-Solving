@@ -124,14 +124,11 @@ std_max_accuracy = np.std(max_accuracies)
 
 # Plot the histogram for optimal threshold values k
 plt.figure(figsize=(10, 6))
-plt.hist(optimal_ks, bins=20, color='blue', edgecolor='black')
-plt.title('Optimal Threshold Values k for Maximum Accuracies')
-plt.xlabel('Optimal Threshold Values k')
-plt.ylabel('Frequency')
-plt.axvline(mean_optimal_k, color='red', linestyle='dashed', linewidth=1)
-# Add text for mean and standard deviation
-plt.text(mean_optimal_k + 0.03, plt.ylim()[1] * 0.9, f'Mean = {mean_optimal_k:.2f}\nSD = {std_optimal_k:.2f}',
-         horizontalalignment='center', color='red')
+plt.hist(optimal_ks, bins=20, range=(0.4, 0.6), color='blue', edgecolor='black', label='k values for maximum accuracies\nMean ={:.2f} SD = {:.2f}'.format(mean_optimal_k, std_optimal_k))
+plt.title('Threshold Value k for Maximum Accuracies')
+plt.xlabel('Threshold Values k')
+plt.ylabel('Number of ks')
+plt.legend(loc='upper left')
 plt.tight_layout()
 plt.savefig('Threshold values k for Maximum Accuracies.png')
 
