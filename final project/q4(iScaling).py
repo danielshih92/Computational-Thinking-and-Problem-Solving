@@ -3,7 +3,7 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_auc_score, accuracy_score, confusion_matrix
-from sklearn.preprocessing import OneHotEncoder
+from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
 def find_optimal_threshold(clf, X, y):
     optimal_k = 0.5
@@ -39,6 +39,10 @@ X = np.hstack((pas_class_onehot, np.array(pas_age).reshape(-1, 1), np.array(pas_
 y = np.array(pas_survived)
 
 
+# Feature Scaling
+scaler = StandardScaler()
+X_scaled = scaler.fit_transform(X)  # Scale the features
+
 weights = []
 accuracies = []
 sensitivities = []
@@ -50,7 +54,7 @@ max_accuracies = []
 accuracies_for_k = {k: [] for k in np.linspace(0, 1, 100)}
 
 for _ in range(1000):
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+    X_train, X_test, y_train, y_test = train_test_split(X_scaled, y, test_size=0.2)  # Use scaled data
 
     # 建立模型
     clf = LogisticRegression(max_iter=1000)
@@ -102,7 +106,7 @@ lower_ppv, upper_ppv = np.percentile(ppv, [2.5, 97.5])
 mean_auroc = np.mean(auroc)
 lower_auroc, upper_auroc = np.percentile(auroc, [2.5, 97.5])
 
-print('Logistic Regression:')
+print('Logistic Regression with iScaling:')
 print('Averages for all examples 1000 trials with k=0.5')
 print('Mean weight of C1 = {}, 95% confidence interval = {}'.format(round(mean_weights[0], 3), round(upper_weights[0] - lower_weights[0], 3)))
 print('Mean weight of C2 = {}, 95% confidence interval = {}'.format(round(mean_weights[1], 3), round(upper_weights[1] - lower_weights[1], 3)))

@@ -84,3 +84,55 @@ plt.text(mean_optimal_k + 0.03, plt.ylim()[1] * 0.9, f'Mean = {mean_optimal_k:.2
          horizontalalignment='center', color='red')
 plt.tight_layout()
 plt.savefig('Threshold values k for Maximum Accuracies.png')
+
+
+
+# (3)maximum accuracies模擬暫時放遺下
+k_values = np.linspace(0.4, 0.6, 101)
+accuracies = []
+
+for k in k_values:
+    y_pred = (clf.predict_proba(X_test)[:,1] >= k).astype(bool)
+
+    accuracies.append(accuracy_score(y_test, y_pred))
+
+max_accuracy_index = np.argmax(accuracies)
+max_accuracy_k = k_values[max_accuracy_index]
+max_accuracy = accuracies[max_accuracy_index]
+
+plt.figure()
+plt.plot(k_values, accuracies, label='Mean Accuracies')  # add label
+plt.plot(max_accuracy_k, max_accuracy, 'ro', label='Max Mean Accuracies')  # add label
+plt.annotate(f'({max_accuracy_k:.2f}, {max_accuracy:.2f})', (max_accuracy_k, max_accuracy), textcoords="offset points", xytext=(-10,-10), ha='center')  # annotate the coordinate
+plt.xlabel('Threshold Values k')
+plt.ylabel('Accuracy')
+plt.title('Mean Accuracies for Different Threshold Values')
+plt.legend()  # show legend
+plt.savefig('Mean Accuracies for Different Threshold Values.png')
+
+
+k_values = np.linspace(0, 1, 101)
+mean_accuracies = []
+
+for k in k_values:
+    accuracies_k = []
+    for clf, X_test, y_test in zip(clf, X_test, y_test):
+        y_pred = (clf.predict_proba(X_test)[:, 1] >= k).astype(int)
+        accuracies_k.append(accuracy_score(y_test, y_pred))
+    mean_accuracies.append(np.mean(accuracies_k))
+
+# 找到最大平均精度對應的k值
+max_mean_accuracy = max(mean_accuracies)
+optimal_k_for_max_mean_accuracy = k_values[mean_accuracies.index(max_mean_accuracy)]
+
+# 繪製曲線圖
+plt.figure(figsize=(8, 5))
+plt.plot(k_values, mean_accuracies, label='Mean Accuracies')
+plt.scatter([optimal_k_for_max_mean_accuracy], [max_mean_accuracy], color='red')  # 高亮最大平均精度
+plt.title('Mean Accuracies for Different Threshold values')
+plt.xlabel('Threshold Values k')
+plt.ylabel('Mean Accuracy')
+plt.legend()
+plt.grid(True)
+plt.tight_layout()
+plt.show()
