@@ -3,7 +3,7 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_auc_score, accuracy_score, confusion_matrix
-from sklearn.preprocessing import OneHotEncoder
+from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
 def find_optimal_threshold(clf, X, y):
     optimal_k = 0.5
@@ -23,6 +23,8 @@ def find_optimal_threshold(clf, X, y):
 pas_class_male = []
 pas_age_male = []
 pas_survived_male = []
+
+pas_gender = []
 
 pas_class_female = []
 pas_age_female = []
@@ -52,6 +54,10 @@ y_male = np.array(pas_survived_male)
 X_female = np.hstack((pas_class_onehot_female, np.array(pas_age_female).reshape(-1, 1)))
 y_female = np.array(pas_survived_female)
 
+# Feature Scaling
+scaler = StandardScaler()
+X_male_scaled = scaler.fit_transform(X_male)
+X_female_scaled = scaler.fit_transform(X_female)
 
 weights = []
 accuracies = []
@@ -65,14 +71,14 @@ accuracies_for_k = {k: [] for k in np.linspace(0, 1, 100)}
 
 # Build the model and simulate 1000 trials
 for _ in range(1000):
-    X_train, X_test, y_train, y_test = train_test_split(X_female, y_female, test_size=0.2)
+    X_train, X_test, y_train, y_test = train_test_split(X_female_scaled, y_female, test_size=0.2)
 
     # 建立模型
     # Perform logistic regression for males
-    # clf_male = LogisticRegression(max_iter=1000)
-    # clf_male.fit(X_train, y_train)
     clf_female = LogisticRegression(max_iter=1000)
     clf_female.fit(X_train, y_train)
+    # clf_female = LogisticRegression(max_iter=1000)
+    # clf_female.fit(X_train, y_train)
 
     weights.append(clf_female.coef_[0])   
 
@@ -83,7 +89,7 @@ for _ in range(1000):
     sensitivities.append(tp / (tp + fn))
     specificities.append(tn / (tn + fp))
     auroc.append(roc_auc_score(y_test, y_pred))
-    if tp + fp > 0:
+    if (tp + fp) != 0:
         ppv.append(tp / (tp + fp))
     else:
         ppv.append(np.nan)
@@ -155,7 +161,7 @@ std_max_accuracy = np.std(max_accuracies)
 
 # Plot the histogram for optimal threshold values k
 plt.figure(figsize=(10, 6))
-plt.hist(optimal_ks, bins=25, range=(0.40, 0.65), edgecolor='black', label='k values for maximum accuracies\nMean ={:.2f} SD = {:.2f}'.format(mean_optimal_k, std_optimal_k))
+plt.hist(optimal_ks, bins=25, range=(0.4, 0.65), edgecolor='black', label='k values for maximum accuracies\nMean ={:.2f} SD = {:.2f}'.format(mean_optimal_k, std_optimal_k))
 plt.title('Female: Threshold Value k for Maximum Accuracies')
 plt.xlabel('Threshold Values k')
 plt.ylabel('Number of ks')

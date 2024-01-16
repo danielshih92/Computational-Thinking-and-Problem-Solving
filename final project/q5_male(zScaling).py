@@ -3,7 +3,7 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import roc_auc_score, accuracy_score, confusion_matrix
-from sklearn.preprocessing import OneHotEncoder
+from sklearn.preprocessing import OneHotEncoder, StandardScaler
 
 def find_optimal_threshold(clf, X, y):
     optimal_k = 0.5
@@ -23,6 +23,8 @@ def find_optimal_threshold(clf, X, y):
 pas_class_male = []
 pas_age_male = []
 pas_survived_male = []
+
+pas_gender = []
 
 pas_class_female = []
 pas_age_female = []
@@ -65,39 +67,44 @@ accuracies_for_k = {k: [] for k in np.linspace(0, 1, 100)}
 
 # Build the model and simulate 1000 trials
 for _ in range(1000):
-    X_train, X_test, y_train, y_test = train_test_split(X_female, y_female, test_size=0.2)
+    X_train, X_test, y_train, y_test = train_test_split(X_male, y_male, test_size=0.2)
+
+    # 標準化特徵
+    scaler = StandardScaler()
+    X_train = scaler.fit_transform(X_train)
+    X_test = scaler.transform(X_test)
 
     # 建立模型
     # Perform logistic regression for males
-    # clf_male = LogisticRegression(max_iter=1000)
-    # clf_male.fit(X_train, y_train)
-    clf_female = LogisticRegression(max_iter=1000)
-    clf_female.fit(X_train, y_train)
+    clf_male = LogisticRegression(max_iter=1000)
+    clf_male.fit(X_train, y_train)
+    # clf_female = LogisticRegression(max_iter=1000)
+    # clf_female.fit(X_train, y_train)
 
-    weights.append(clf_female.coef_[0])   
+    weights.append(clf_male.coef_[0])   
 
-    y_pred = clf_female.predict(X_test)
+    y_pred = clf_male.predict(X_test)
 
     tn, fp, fn, tp = confusion_matrix(y_test, y_pred).ravel()
     accuracies.append(accuracy_score(y_test, y_pred))
     sensitivities.append(tp / (tp + fn))
     specificities.append(tn / (tn + fp))
     auroc.append(roc_auc_score(y_test, y_pred))
-    if tp + fp > 0:
+    if (tp + fp) != 0:
         ppv.append(tp / (tp + fp))
     else:
         ppv.append(np.nan)
 
     # 第二張圖
     # 尋找最優閾值k
-    optimal_k, max_accuracy = find_optimal_threshold(clf_female, X_test, y_test)
+    optimal_k, max_accuracy = find_optimal_threshold(clf_male, X_test, y_test)
     
     # 收集數據
     optimal_ks.append(optimal_k)
     max_accuracies.append(max_accuracy)
     # 第三張圖
     for k in np.linspace(0, 1, 100):
-        y_pred = (clf_female.predict_proba(X_test)[:,1] >= k).astype(int)
+        y_pred = (clf_male.predict_proba(X_test)[:,1] >= k).astype(int)
         accuracy = accuracy_score(y_test, y_pred)
         accuracies_for_k[k].append(accuracy)
 
@@ -124,7 +131,7 @@ mean_auroc = np.mean(auroc)
 lower_auroc, upper_auroc = np.percentile(auroc, [2.5, 97.5])
 
 print('Logistic Regression with male and female seperated:')
-print('Averages for Female examples 1000 trials with k=0.5')
+print('Averages for Male examples 1000 trials with k=0.5')
 print('Mean weight of C1 = {}, 95% confidence interval = {}'.format(round(mean_weights[0], 3), round(upper_weights[0] - lower_weights[0], 3)))
 print('Mean weight of C2 = {}, 95% confidence interval = {}'.format(round(mean_weights[1], 3), round(upper_weights[1] - lower_weights[1], 3)))
 print('Mean weight of C3 = {}, 95% confidence interval = {}'.format(round(mean_weights[2], 3), round(upper_weights[2] - lower_weights[2], 3)))
@@ -142,9 +149,9 @@ plt.figure()
 plt.hist(accuracies, bins=25, edgecolor='black', label='Mean Accuracies\nMean = {:.2f} SD = {:.2f}'.format(mean_accuracy, std_max_accuracy))
 plt.xlabel('Maximum Accuracies')
 plt.ylabel('Numbers of Maximum Accuracies')
-plt.title('Female: Maximum Accuracies')
+plt.title('Male: Maximum Accuracies')
 plt.legend(loc='upper left')
-plt.savefig('(Female)Maximum Accuracies.png')
+plt.savefig('(Male)Maximum Accuracies.png')
 
 # (2)threshold values k for maximum accuracies
 # 計算k值和最大精度的平均值和標準差
@@ -155,13 +162,13 @@ std_max_accuracy = np.std(max_accuracies)
 
 # Plot the histogram for optimal threshold values k
 plt.figure(figsize=(10, 6))
-plt.hist(optimal_ks, bins=25, range=(0.40, 0.65), edgecolor='black', label='k values for maximum accuracies\nMean ={:.2f} SD = {:.2f}'.format(mean_optimal_k, std_optimal_k))
-plt.title('Female: Threshold Value k for Maximum Accuracies')
+plt.hist(optimal_ks, bins=25, range=(0.4, 0.65), edgecolor='black', label='k values for maximum accuracies\nMean ={:.2f} SD = {:.2f}'.format(mean_optimal_k, std_optimal_k))
+plt.title('Male: Threshold Value k for Maximum Accuracies')
 plt.xlabel('Threshold Values k')
 plt.ylabel('Number of ks')
 plt.legend(loc='upper left')
 plt.tight_layout()
-plt.savefig('(Female)Threshold values k for Maximum Accuracies.png')
+plt.savefig('(Male)Threshold values k for Maximum Accuracies.png')
 
 # (3)mean accuracies for different threshold values
 # 計算每個閾值的平均準確度
@@ -173,11 +180,11 @@ plt.plot(list(mean_accuracies.keys()), list(mean_accuracies.values()), label='Me
 max_accuracy_k = max(mean_accuracies, key=mean_accuracies.get)
 plt.scatter(max_accuracy_k, mean_accuracies[max_accuracy_k], label='Maximum Mean Accuracy', color='red')  # 最大準確度的點
 plt.text(max_accuracy_k, mean_accuracies[max_accuracy_k], '({:.3f}, {:.3f})'.format(max_accuracy_k, mean_accuracies[max_accuracy_k]), ha='right') 
-plt.title('Female: Mean accuracies for different threshold values')
+plt.title('Male: Mean accuracies for different threshold values')
 plt.xlabel('Threshold values')
 plt.ylabel('Mean Accuracies')
-plt.xlim(0.40, 0.7)
-plt.ylim(0.750, 0.780)
+plt.xlim(0.40, 0.65)
+plt.ylim(0.7875, 0.8040)
 plt.legend(loc='upper left')
 plt.tight_layout()
-plt.savefig('(Female)Mean accuracies for different threshold values.png')
+plt.savefig('(Male)Mean accuracies for different threshold values.png')

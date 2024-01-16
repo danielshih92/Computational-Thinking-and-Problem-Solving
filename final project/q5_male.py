@@ -72,9 +72,9 @@ for _ in range(1000):
     # 建立模型
     # Perform logistic regression for males
     clf_male = LogisticRegression(max_iter=1000)
-    clf_male.fit(X_male, y_male)
+    clf_male.fit(X_train, y_train)
     # clf_female = LogisticRegression(max_iter=1000)
-    # clf_female.fit(X_female, y_female)
+    # clf_female.fit(X_train, y_train)
 
     weights.append(clf_male.coef_[0])   
 
@@ -119,13 +119,13 @@ lower_sensitivity, upper_sensitivity = np.percentile(sensitivities, [2.5, 97.5])
 mean_specificity = np.mean(specificities)
 lower_specificity, upper_specificity = np.percentile(specificities, [2.5, 97.5])
 
-mean_ppv = np.mean(ppv)
-lower_ppv, upper_ppv = np.percentile(ppv, [2.5, 97.5])
+mean_ppv = np.nanmean(ppv)
+lower_ppv, upper_ppv = np.nanpercentile(ppv, [2.5, 97.5])
 
 mean_auroc = np.mean(auroc)
 lower_auroc, upper_auroc = np.percentile(auroc, [2.5, 97.5])
 
-print('Logistic Regression:')
+print('Logistic Regression with male and female seperated:')
 print('Averages for Male examples 1000 trials with k=0.5')
 print('Mean weight of C1 = {}, 95% confidence interval = {}'.format(round(mean_weights[0], 3), round(upper_weights[0] - lower_weights[0], 3)))
 print('Mean weight of C2 = {}, 95% confidence interval = {}'.format(round(mean_weights[1], 3), round(upper_weights[1] - lower_weights[1], 3)))
@@ -141,7 +141,7 @@ print('Mean AUROC = {},  95% confidence interval = {}'.format(round(mean_auroc, 
 # (1)maxium accuracies
 # Calculate the mean and standard deviation of max_accuracies
 plt.figure()
-plt.hist(accuracies, bins=20, edgecolor='black', label='Mean Accuracies\nMean = {:.2f} SD = {:.2f}'.format(mean_accuracy, std_max_accuracy))
+plt.hist(accuracies, bins=25, edgecolor='black', label='Mean Accuracies\nMean = {:.2f} SD = {:.2f}'.format(mean_accuracy, std_max_accuracy))
 plt.xlabel('Maximum Accuracies')
 plt.ylabel('Numbers of Maximum Accuracies')
 plt.title('Male: Maximum Accuracies')
@@ -157,7 +157,7 @@ std_max_accuracy = np.std(max_accuracies)
 
 # Plot the histogram for optimal threshold values k
 plt.figure(figsize=(10, 6))
-plt.hist(optimal_ks, bins=20, range=(0.4, 0.6), edgecolor='black', label='k values for maximum accuracies\nMean ={:.2f} SD = {:.2f}'.format(mean_optimal_k, std_optimal_k))
+plt.hist(optimal_ks, bins=25, range=(0.4, 0.65), edgecolor='black', label='k values for maximum accuracies\nMean ={:.2f} SD = {:.2f}'.format(mean_optimal_k, std_optimal_k))
 plt.title('Male: Threshold Value k for Maximum Accuracies')
 plt.xlabel('Threshold Values k')
 plt.ylabel('Number of ks')
@@ -178,8 +178,8 @@ plt.text(max_accuracy_k, mean_accuracies[max_accuracy_k], '({:.3f}, {:.3f})'.for
 plt.title('Male: Mean accuracies for different threshold values')
 plt.xlabel('Threshold values')
 plt.ylabel('Mean Accuracies')
-plt.xlim(0.4, 0.6)
-plt.ylim(0.7750, 0.7925)
+plt.xlim(0.40, 0.65)
+plt.ylim(0.7875, 0.8040)
 plt.legend(loc='upper left')
 plt.tight_layout()
 plt.savefig('(Male)Mean accuracies for different threshold values.png')
