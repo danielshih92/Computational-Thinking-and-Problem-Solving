@@ -54,11 +54,6 @@ y_male = np.array(pas_survived_male)
 X_female = np.hstack((pas_class_onehot_female, np.array(pas_age_female).reshape(-1, 1)))
 y_female = np.array(pas_survived_female)
 
-# Feature Scaling
-scaler = StandardScaler()
-X_male_scaled = scaler.fit_transform(X_male)
-X_female_scaled = scaler.fit_transform(X_female)
-
 weights = []
 accuracies = []
 sensitivities = []
@@ -71,8 +66,13 @@ accuracies_for_k = {k: [] for k in np.linspace(0, 1, 100)}
 
 # Build the model and simulate 1000 trials
 for _ in range(1000):
-    X_train, X_test, y_train, y_test = train_test_split(X_female_scaled, y_female, test_size=0.2)
+    X_train, X_test, y_train, y_test = train_test_split(X_female, y_female, test_size=0.2)
 
+    # 標準化特徵
+    scaler = StandardScaler()
+    X_train = scaler.fit_transform(X_train)
+    X_test = scaler.transform(X_test)
+    
     # 建立模型
     # Perform logistic regression for males
     clf_female = LogisticRegression(max_iter=1000)

@@ -1,7 +1,6 @@
-import matplotlib.pyplot as plt
 import numpy as np
-from sklearn.model_selection import train_test_split, cross_val_score
-from sklearn.metrics import accuracy_score, confusion_matrix
+from sklearn.model_selection import train_test_split
+from sklearn.metrics import confusion_matrix
 
 def accuracy(truePos, falsePos, trueNeg, falseNeg): 
     numerator = truePos + trueNeg 
@@ -45,16 +44,6 @@ def confusionMatrix(truePos, falsePos, trueNeg, falseNeg):
     getStats(truePos, falsePos, trueNeg, falseNeg)
     return
 
-def plotHist(k_values, cv_scores, real_pred_scores):
-    plt.figure(figsize=(10, 6))
-    plt.plot(k_values, cv_scores, label='n-fold cross validation')
-    plt.plot(k_values, real_pred_scores, label='Real Prediction')
-    plt.xlabel('k values for KNN Regression')
-    plt.ylabel('Accuracy')
-    plt.xticks(range(1, 26, 2))
-    plt.title('Average Accuracy vs k (10 folds)')
-    plt.legend()
-    plt.savefig('Average Accuracy vs k (10 folds).png')
 def euclidean_distance(x1, x2):
     return np.sqrt(np.sum((x1 - x2)**2))
 
@@ -107,53 +96,53 @@ with open('TitanicPassengers.txt', 'r') as file:
 X = np.array([pas_class, pas_age, pas_gender]).T
 y = np.array(pas_survived)
 
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+# Split the data into male and female
+X_male = X[X[:, 2] == 1]
+y_male = y[X[:, 2] == 1]
+X_female = X[X[:, 2] == 0]
+y_female = y[X[:, 2] == 0]
 
-knn = KNN(k=3)
-knn.fit(X_train, y_train)
-y_pred = knn.predict(X_test)
+# Set k to 3
+k = 3
 
-C_M = confusion_matrix(y_test, y_pred)
-trueNeg = C_M[0][0]
-falsePos = C_M[0][1]
-falseNeg = C_M[1][0]
-truePos = C_M[1][1]
-print("k-NN Prediction for Survive with k=3:")
+# Train and predict for male
+X_train_male, X_test_male, y_train_male, y_test_male = train_test_split(X_male, y_male, test_size=0.2)
+knn_male = KNN(k=k)
+knn_male.fit(X_train_male, y_train_male)
+y_pred_male = knn_male.predict(X_test_male)
 
-confusionMatrix(truePos, falsePos, trueNeg, falseNeg)
+# Compute the confusion matrix for male
+C_M_male = confusion_matrix(y_test_male, y_pred_male)
+print("Try to predict male and female separately and combined with k=3:\n")
+print("For male:")
 
-k_values = list(range(1, 26, 2))
-cv_scores = []
-test_scores = []
+trueNeg_male = C_M_male[0][0]
+falsePos_male = C_M_male[0][1]
+falseNeg_male = C_M_male[1][0]
+truePos_male = C_M_male[1][1]
 
-for k in k_values:
-    knn = KNN(k=k)
-    scores = cross_val_score(knn, X_train, y_train, cv=10, scoring='accuracy')
-    cv_scores.append(scores.mean())
-    
-    # Fit the model on the training data and evaluate it on the test data
-    knn.fit(X_train, y_train)
-    y_pred = knn.predict(X_test)
-    test_score = accuracy_score(y_test, y_pred)
-    test_scores.append(test_score)
+confusionMatrix(truePos_male, falsePos_male, trueNeg_male, falseNeg_male)
 
-optimal_k = k_values[test_scores.index(max(test_scores))]
-print("K for Maximum Accuracy is:", optimal_k)
+# Train and predict for female
+X_train_female, X_test_female, y_train_female, y_test_female = train_test_split(X_female, y_female, test_size=0.2)
+knn_female = KNN(k=k)
+knn_female.fit(X_train_female, y_train_female)
+y_pred_female = knn_female.predict(X_test_female)
 
-knn = KNN(k=optimal_k)
-knn.fit(X_train, y_train)
-y_pred = knn.predict(X_test)
+# Compute the confusion matrix for female
+C_M_female = confusion_matrix(y_test_female, y_pred_female)
+print("\nFor female:")
 
-C_M = confusion_matrix(y_test, y_pred)
-print("Confusion Matrix for optimal k:")
+trueNeg_female = C_M_female[0][0]
+falsePos_female = C_M_female[0][1]
+falseNeg_female = C_M_female[1][0]
+truePos_female = C_M_female[1][1]
 
-trueNeg = C_M[0][0]
-falsePos = C_M[0][1]
-falseNeg = C_M[1][0]
-truePos = C_M[1][1]
-
-confusionMatrix(truePos, falsePos, trueNeg, falseNeg)
-print("Predictions with maximum accuracy k:", optimal_k)
-print("Cross Validation Accuracies is:", cv_scores[k_values.index(optimal_k)])
-print("Predicted Accuracies is:", test_scores[k_values.index(optimal_k)])
-plotHist(k_values, cv_scores, test_scores)
+confusionMatrix(truePos_female, falsePos_female, trueNeg_female, falseNeg_female)
+# combined
+print("\nCombined Predictions Statistics:")
+truePos_combined = truePos_female + truePos_male
+falsePos_combined = falsePos_female + falsePos_male
+trueNeg_combined = trueNeg_female + trueNeg_male
+falseNeg_combined = falseNeg_female + falseNeg_male
+confusionMatrix(truePos_combined, falsePos_combined, trueNeg_combined, falseNeg_combined)
